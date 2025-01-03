@@ -10,7 +10,7 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize: 1024,
+	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		return true
@@ -24,20 +24,20 @@ type Client struct {
 }
 
 type Server struct {
-	clients map[string]*Client
-	broadcast chan []byte
-	register chan *Client
+	clients    map[string]*Client
+	broadcast  chan []byte
+	register   chan *Client
 	unregister chan *Client
-	mu sync.Mutex
+	mu         sync.Mutex
 }
 
 func NewServer() *Server {
 	return &Server{
-		clients: make(map[string]*Client),
-		broadcast: make(chan []byte),
-		register: make(chan *Client),
+		clients:    make(map[string]*Client),
+		broadcast:  make(chan []byte),
+		register:   make(chan *Client),
 		unregister: make(chan *Client),
-		mu: sync.Mutex{},
+		mu:         sync.Mutex{},
 	}
 }
 
@@ -49,19 +49,19 @@ func (s *Server) Run() {
 			if existingClient, exists := s.clients[client.ID]; exists {
 				existingClient.Conn.Close()
 				delete(s.clients, client.ID)
-				fmt.Printf("Exisiting client %s disconnected", client.ID)
+				fmt.Printf("Exisiting client %s disconnected\n", client.ID)
 			}
 			s.clients[client.ID] = client
 			s.mu.Unlock()
-			log.Printf("Client %s connected", client.ID)
+			log.Printf("Client %s connected\n", client.ID)
 
 		case client := <-s.unregister:
 			if _, ok := s.clients[client.ID]; ok {
 				delete(s.clients, client.ID)
 				close(client.Send)
-				log.Printf("Client %s disconnected", client.ID)
+				log.Printf("Client %s disconnected\n", client.ID)
 			}
-		
+
 		case message := <-s.broadcast:
 			for _, client := range s.clients {
 				select {
@@ -78,14 +78,14 @@ func (s *Server) Run() {
 func (s *Server) HandleConnections(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Failed to upgrade connection: %v", err)
+		log.Printf("Failed to upgrade connection: %v\n", err)
 		return
 	}
 
 	clientId := r.RemoteAddr
 
 	client := &Client{
-		ID: clientId,
+		ID:   clientId,
 		Conn: conn,
 		Send: make(chan []byte),
 	}
@@ -105,7 +105,7 @@ func (s *Server) handleMessages(client *Client) {
 		_, message, err := client.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("Unexpected WbeSocket close: %v", err)
+				log.Printf("Unexpected WbeSocket close: %v\n", err)
 			}
 			break
 		}

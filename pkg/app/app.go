@@ -17,26 +17,26 @@ import (
 )
 
 type App struct {
-	node *node.Node
-	masterAddr string
-	wsServer *websocket.Server
+	node        *node.Node
+	masterAddr  string
+	wsServer    *websocket.Server
 	masterFound chan string
-	stopChan chan os.Signal
-	wg sync.WaitGroup
-	isMaster bool
+	stopChan    chan os.Signal
+	wg          sync.WaitGroup
+	isMaster    bool
 }
 
 func NewApp(name string) *App {
 	n := &node.Node{
-		ID: uuid.New().String(),
-		Name: name,
+		ID:       uuid.New().String(),
+		Name:     name,
 		IsMaster: false,
 	}
 
 	return &App{
-		node: n,
+		node:        n,
 		masterFound: make(chan string),
-		stopChan: make(chan os.Signal, 1),
+		stopChan:    make(chan os.Signal, 1),
 	}
 }
 
@@ -46,11 +46,11 @@ func (a *App) SetAsMaster() {
 }
 
 func (a *App) Start() error {
-	fmt.Printf("Starting application for node: %s", a.node.Name)
+	fmt.Printf("Starting application for node: %s\n", a.node.Name)
 
 	discoveryService := discovery.NewService(a.node, a.masterFound)
 	a.wg.Add(1)
-	
+
 	go func() {
 		defer a.wg.Done()
 		if err := discoveryService.Start(); err != nil {
@@ -99,13 +99,12 @@ func (a *App) listenForMaster() {
 	}
 }
 
-
 func (a *App) connectToMaster() {
 	for {
-		fmt.Printf("Connecting to master at: %s", a.masterAddr)
+		fmt.Printf("Connecting to master at: %s\n", a.masterAddr)
 		conn, _, err := ws.DefaultDialer.Dial(fmt.Sprintf("ws://%s/ws", a.masterAddr), nil)
 		if err != nil {
-			fmt.Printf("Error connecting to master: %v", err)
+			fmt.Printf("Error connecting to master: %v\n", err)
 			continue
 		}
 
